@@ -1,8 +1,6 @@
 package aQute.bnd.maven.export.plugin;
 
 import java.io.File;
-import java.util.HashSet;
-import java.util.Set;
 
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
@@ -15,17 +13,13 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.project.ProjectDependenciesResolver;
 import org.apache.maven.settings.Settings;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import aQute.bnd.maven.lib.configuration.Bundles;
-import aQute.bnd.maven.lib.resolve.Scope;
-
-@Mojo(name = "bnd-generate", defaultPhase = LifecyclePhase.GENERATE_SOURCES, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME, threadSafe = true)
+@Mojo(name = "bnd-generate", defaultPhase = LifecyclePhase.GENERATE_SOURCES, requiresDependencyResolution = ResolutionScope.NONE, threadSafe = true)
 public class GenerateMojo extends AbstractMojo {
 	private static final Logger									logger	= LoggerFactory.getLogger(GenerateMojo.class);
 
@@ -47,9 +41,6 @@ public class GenerateMojo extends AbstractMojo {
 	@Parameter(property = "bnd.skip", defaultValue = "false")
 	boolean														skip;
 
-	@Parameter
-	private Bundles												bundles	= new Bundles();
-
 	@Parameter(defaultValue = "true")
 	private boolean												reportOptional;
 
@@ -62,27 +53,15 @@ public class GenerateMojo extends AbstractMojo {
 	@Component
 	private RepositorySystem									system;
 
-	@Component
-	private ProjectDependenciesResolver							resolver;
-
-	@Component
-	@SuppressWarnings("deprecation")
-	protected org.apache.maven.artifact.factory.ArtifactFactory	artifactFactory;
-
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
 
 		int errors = 0;
-		Set<Scope> scopes = new HashSet<Scope>();
-		scopes.add(Scope.compile);
-		scopes.add(Scope.provided);
-		scopes.add(Scope.system);
+
 		try {
-			BndContainer container = new BndContainer.Builder(project, session, repositorySession, resolver,
-				artifactFactory, system).setBundles(bundles.getFiles(project.getBasedir()))
-					.setIncludeDependencyManagement(true)
-					.setScopes(scopes)
-					.setUseMavenDependencies(true)
+			BndContainer container = new BndContainer.Builder(project, session, repositorySession, system)
+				.setDependencies(mojoExecution.getPlugin()
+					.getDependencies())
 					.build();
 
 			GenerateOperation operation = getOperation();

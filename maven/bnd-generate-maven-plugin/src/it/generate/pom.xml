@@ -12,11 +12,6 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.geckoprojects.emf</groupId>
-			<artifactId>org.gecko.emf.osgi.codegen</artifactId>
-			<version>4.1.1.202202162308</version>
-		</dependency>
-		<dependency>
-			<groupId>org.geckoprojects.emf</groupId>
 			<artifactId>org.gecko.emf.osgi.api</artifactId>
 			<version>4.1.1.202202162308</version>
 		</dependency>
@@ -28,14 +23,21 @@
 				<groupId>biz.aQute.bnd</groupId>
 				<artifactId>bnd-generate-maven-plugin</artifactId>
 				<version>${bnd.version}</version>
+				<dependencies>
+					<dependency>
+						<groupId>org.geckoprojects.emf</groupId>
+						<artifactId>org.gecko.emf.osgi.codegen</artifactId>
+						<version>4.1.1.202202162308</version>
+					</dependency>
+				</dependencies>
 				<executions>
-	          <execution>
-	            <phase>generate-sources</phase>
-	            <goals>
-	              <goal>bnd-generate</goal>
-	            </goals>
-	          </execution>
-	        </executions>
+					<execution>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>bnd-generate</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
