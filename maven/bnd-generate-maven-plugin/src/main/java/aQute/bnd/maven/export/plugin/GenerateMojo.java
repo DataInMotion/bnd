@@ -1,7 +1,6 @@
 package aQute.bnd.maven.export.plugin;
 
 import java.io.File;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.maven.execution.MavenSession;
@@ -24,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import aQute.bnd.maven.lib.configuration.Bundles;
 import aQute.bnd.maven.lib.resolve.Scope;
+import aQute.bnd.unmodifiable.Sets;
 
 @Mojo(name = "bnd-generate", defaultPhase = LifecyclePhase.GENERATE_SOURCES, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME, threadSafe = true)
 public class GenerateMojo extends AbstractMojo {
@@ -50,11 +50,8 @@ public class GenerateMojo extends AbstractMojo {
 	@Parameter
 	private Bundles												bundles	= new Bundles();
 
-	@Parameter(defaultValue = "true")
-	private boolean												reportOptional;
-
-	@Parameter(defaultValue = "true")
-	private boolean												attach;
+	@Parameter(property = "bnd.external.plugin.scopes", defaultValue = "compile,runtime")
+	private Set<Scope>											scopes	= Sets.of(Scope.compile, Scope.runtime);
 
 	@Parameter(defaultValue = "${session}", readonly = true)
 	private MavenSession										session;
@@ -73,10 +70,6 @@ public class GenerateMojo extends AbstractMojo {
 	public void execute() throws MojoExecutionException, MojoFailureException {
 
 		int errors = 0;
-		Set<Scope> scopes = new HashSet<Scope>();
-		scopes.add(Scope.compile);
-		scopes.add(Scope.provided);
-		scopes.add(Scope.system);
 		try {
 			BndContainer container = new BndContainer.Builder(project, session, repositorySession, resolver,
 				artifactFactory, system).setBundles(bundles.getFiles(project.getBasedir()))

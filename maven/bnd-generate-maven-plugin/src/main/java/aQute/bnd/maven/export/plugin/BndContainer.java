@@ -23,7 +23,7 @@ import aQute.bnd.annotation.ProviderType;
 import aQute.bnd.build.Project;
 import aQute.bnd.build.Workspace;
 import aQute.bnd.maven.lib.configuration.BeanProperties;
-import aQute.bnd.maven.lib.configuration.ConfigurationHelper;
+import aQute.bnd.maven.lib.configuration.Configurations;
 import aQute.bnd.maven.lib.resolve.DependencyResolver;
 import aQute.bnd.maven.lib.resolve.ImplicitFileSetRepository;
 import aQute.bnd.maven.lib.resolve.LocalPostProcessor;
@@ -184,7 +184,7 @@ public class BndContainer {
 			bnd.setTrace(logger.isDebugEnabled());
 
 			bnd.setBase(project.getBasedir());
-			File propertiesFile = ConfigurationHelper.loadProperties(bnd, project, mojoExecution);
+			File propertiesFile = Configurations.loadProperties(bnd, project, mojoExecution);
 			bnd.setProperty("project.output", workingDir.getCanonicalPath());
 
 			int errors = report(bnd);

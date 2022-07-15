@@ -25,9 +25,9 @@ import aQute.lib.utf8properties.UTF8Properties;
  *
  * @author Juergen Albert
  */
-public class ConfigurationHelper {
+public class Configurations {
 
-	protected final static Logger logger = LoggerFactory.getLogger(ConfigurationHelper.class);
+	protected final static Logger logger = LoggerFactory.getLogger(Configurations.class);
 
 	public static File loadProperties(Processor processor, MavenProject project, MojoExecution mojoExecution)
 		throws Exception {
@@ -37,7 +37,7 @@ public class ConfigurationHelper {
 		// Load current project properties
 		Xpp3Dom configuration = Optional.ofNullable(project.getBuildPlugins())
 			.flatMap(new FlatMapHelper(mojoExecution)::getConfiguration)
-			.orElseGet(ConfigurationHelper::defaultConfiguration);
+			.orElseGet(Configurations::defaultConfiguration);
 		return loadProjectProperties(processor, project, project, configuration);
 	}
 
@@ -63,7 +63,7 @@ public class ConfigurationHelper {
 		configuration = Optional.ofNullable(currentProject.getPluginManagement())
 			.map(PluginManagement::getPlugins)
 			.flatMap(new FlatMapHelper(mojoExecution)::getConfiguration)
-			.orElseGet(ConfigurationHelper::defaultConfiguration);
+			.orElseGet(Configurations::defaultConfiguration);
 		// Load properties from parent project's bnd file or configuration in
 		// project's pluginManagement
 		loadProjectProperties(builder, parentProject, currentProject, configuration);
