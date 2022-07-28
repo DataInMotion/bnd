@@ -1,8 +1,14 @@
 package aQute.bnd.maven.export.plugin;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Properties;
+import java.util.StringJoiner;
 
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.model.Dependency;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -21,7 +27,8 @@ import org.slf4j.LoggerFactory;
 
 @Mojo(name = "bnd-generate", defaultPhase = LifecyclePhase.GENERATE_SOURCES, requiresDependencyResolution = ResolutionScope.NONE, threadSafe = true)
 public class GenerateMojo extends AbstractMojo {
-	private static final Logger									logger	= LoggerFactory.getLogger(GenerateMojo.class);
+
+	protected final Logger			logger	= LoggerFactory.getLogger(getClass());
 
 	@Parameter(defaultValue = "${project}", readonly = true, required = true)
 	private MavenProject										project;
@@ -41,11 +48,18 @@ public class GenerateMojo extends AbstractMojo {
 	@Parameter(property = "bnd.skip", defaultValue = "false")
 	boolean														skip;
 
-	@Parameter(defaultValue = "true")
-	private boolean												reportOptional;
+	/**
+	 * The Mojo by itself does nothing. Dependent on its configuration, it will
+	 * try to find a suitable generator in one of the dependencies in this list.
+	 */
+	@Parameter(property = "externalPlugins", required = false)
+	List<Dependency>				externalPlugins;
 
-	@Parameter(defaultValue = "true")
-	private boolean												attach;
+	/**
+	 * Allows multiple steps
+	 */
+	@Parameter(property = "steps", required = false)
+	List<Step>						steps;
 
 	@Parameter(defaultValue = "${session}", readonly = true)
 	private MavenSession										session;
@@ -58,10 +72,26 @@ public class GenerateMojo extends AbstractMojo {
 
 		int errors = 0;
 
+		List<Dependency> normalizedDependencies = new ArrayList<Dependency>();
+		if (externalPlugins != null) {
+			for (Dependency dependency : externalPlugins) {
+				normalizedDependencies.add(normalizeDependendency(dependency));
+			}
+		}
+		Properties additionalProperties = new Properties();
+		StringJoiner instruction = new StringJoiner(",");
+		steps.stream()
+			.map(this::mapStep)
+			.forEach(instruction::add);
+		if (instruction.length() > 0) {
+			logger.info("created instructions from steps: {}", instruction.toString());
+			additionalProperties.put("-generate.maven", instruction.toString());
+		}
 		try {
+
 			BndContainer container = new BndContainer.Builder(project, session, repositorySession, system)
-				.setDependencies(mojoExecution.getPlugin()
-					.getDependencies())
+				.setDependencies(normalizedDependencies)
+				.setAdditionalProperiets(additionalProperties)
 					.build();
 
 			GenerateOperation operation = getOperation();
@@ -91,5 +121,39 @@ public class GenerateMojo extends AbstractMojo {
 			}
 			return 0;
 		};
+	}
+
+	private String mapStep(Step step) {
+		StringJoiner joiner = new StringJoiner(";");
+		joiner.add(step.getSource());
+		joiner.add("output=" + step.getOutput());
+		if (step.getGenerateCommand() != null) {
+			joiner.add("generate=\"" + step.getGenerateCommand() + "\"");
+		}
+		if (step.getSystemCommand() != null) {
+			joiner.add("system=\"" + step.getSystemCommand() + "\"");
+		}
+		step.getProperties()
+			.forEach((k, v) -> joiner.add(k + "=\"" + v + "\""));
+		return joiner.toString();
+	}
+
+	private Dependency normalizeDependendency(Dependency dependency) throws MojoExecutionException {
+		if(dependency.getVersion() != null) {
+			return dependency;
+		} else {
+			List<Dependency> deps = project.getDependencyManagement() != null ? project.getDependencyManagement()
+				.getDependencies() : Collections.emptyList();
+			return deps
+				.stream()
+				.filter(d -> d.getArtifactId()
+					.equals(dependency.getArtifactId())
+					&& d.getGroupId()
+						.equals(dependency.getGroupId()))
+				.findFirst()
+				.map(d -> d.clone())
+				.orElseThrow(() -> new MojoExecutionException(dependency, "Version is missing",
+					"The Version of the " + dependency.toString() + " is missing"));
+		}
 	}
 }

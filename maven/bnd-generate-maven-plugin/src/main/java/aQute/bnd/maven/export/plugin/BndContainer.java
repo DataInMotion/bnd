@@ -3,7 +3,6 @@ package aQute.bnd.maven.export.plugin;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
@@ -29,7 +28,7 @@ import aQute.bnd.annotation.ProviderType;
 import aQute.bnd.build.Project;
 import aQute.bnd.build.Workspace;
 import aQute.bnd.maven.lib.configuration.BeanProperties;
-import aQute.bnd.maven.lib.configuration.ConfigurationHelper;
+import aQute.bnd.maven.lib.configuration.Configurations;
 import aQute.bnd.maven.lib.resolve.ImplicitFileSetRepository;
 import aQute.bnd.maven.lib.resolve.LocalPostProcessor;
 import aQute.bnd.maven.lib.resolve.PostProcessor;
@@ -57,6 +56,8 @@ public class BndContainer {
 
 	private List<Dependency>										dependencies;
 
+	private Properties						additionProperties;
+
 	public static class Builder {
 
 		private final MavenProject										project;
@@ -65,6 +66,7 @@ public class BndContainer {
 		private final RepositorySystem									system;
 		private PostProcessor											postProcessor				= new LocalPostProcessor();
 		private List<Dependency>										dependencies	= new ArrayList<Dependency>();
+		private Properties						additionaProperties	= new Properties();
 
 		@SuppressWarnings("deprecation")
 		public Builder(MavenProject project, MavenSession session, RepositorySystemSession repositorySession,
@@ -86,9 +88,14 @@ public class BndContainer {
 			return this;
 		}
 
+		public Builder setAdditionalProperiets(Properties properties) {
+			this.additionaProperties.putAll(properties);
+			return this;
+		}
+
 		public BndContainer build() {
 			return new BndContainer(project, session, repositorySession, system,
-				dependencies, postProcessor);
+				dependencies, postProcessor, additionaProperties);
 		}
 
 	}
@@ -107,13 +114,15 @@ public class BndContainer {
 
 	@SuppressWarnings("deprecation")
 	BndContainer(MavenProject project, MavenSession session, RepositorySystemSession repositorySession,
-		RepositorySystem system, List<Dependency> dependencies, PostProcessor postProcessor) {
+		RepositorySystem system, List<Dependency> dependencies, PostProcessor postProcessor,
+		Properties additionProperties) {
 		this.project = project;
 		this.session = session;
 		this.repositorySession = repositorySession;
 		this.system = system;
 		this.dependencies = dependencies;
 		this.postProcessor = postProcessor;
+		this.additionProperties = additionProperties;
 	}
 
 	public int generate(String task, File workingDir, GenerateOperation operation, Settings settings,
@@ -123,11 +132,8 @@ public class BndContainer {
 		beanProperties.put("settings", settings);
 		Properties mavenProperties = new Properties(beanProperties);
 		Properties projectProperties = project.getProperties();
-		for (Enumeration<?> propertyNames = projectProperties.propertyNames(); propertyNames.hasMoreElements();) {
-			Object key = propertyNames.nextElement();
-			mavenProperties.put(key, projectProperties.get(key));
-		}
-
+		mavenProperties.putAll(projectProperties);
+		mavenProperties.putAll(additionProperties);
 		try (Project bnd = init(task, workingDir, mavenProperties)) {
 			if (bnd == null) {
 				return 1;
@@ -136,7 +142,7 @@ public class BndContainer {
 			bnd.setTrace(logger.isDebugEnabled());
 
 			bnd.setBase(project.getBasedir());
-			File propertiesFile = ConfigurationHelper.loadProperties(bnd, project, mojoExecution);
+			File propertiesFile = Configurations.loadProperties(bnd, project, mojoExecution);
 			bnd.setProperty("project.output", workingDir.getCanonicalPath());
 
 			int errors = report(bnd);

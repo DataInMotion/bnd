@@ -62,7 +62,7 @@ import aQute.bnd.exceptions.Exceptions;
 import aQute.bnd.header.OSGiHeader;
 import aQute.bnd.maven.PomPropertiesResource;
 import aQute.bnd.maven.lib.configuration.BeanProperties;
-import aQute.bnd.maven.lib.configuration.ConfigurationHelper;
+import aQute.bnd.maven.lib.configuration.Configurations;
 import aQute.bnd.osgi.Builder;
 import aQute.bnd.osgi.Constants;
 import aQute.bnd.osgi.FileResource;
@@ -202,7 +202,7 @@ public abstract class AbstractBndMavenPlugin extends AbstractMojo {
 			builder.setTrace(logger.isDebugEnabled());
 
 			builder.setBase(project.getBasedir());
-			propertiesFile = ConfigurationHelper.loadProperties(builder, project, mojoExecution);
+			propertiesFile = Configurations.loadProperties(builder, project, mojoExecution);
 			builder.setProperty("project.output", targetDir.getCanonicalPath());
 
 			// If no bundle to be built, we have nothing to do
