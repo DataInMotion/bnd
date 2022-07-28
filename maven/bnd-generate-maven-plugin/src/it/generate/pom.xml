@@ -1,4 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
+ <project xmlns="http://maven.apache.org/POM/4.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
@@ -28,14 +28,21 @@
 				<groupId>biz.aQute.bnd</groupId>
 				<artifactId>bnd-generate-maven-plugin</artifactId>
 				<version>${bnd.version}</version>
+				<dependencies>
+					<dependency>
+						<groupId>org.geckoprojects.emf</groupId>
+						<artifactId>org.gecko.emf.osgi.codegen</artifactId>
+						<version>4.1.1.202202162308</version>
+					</dependency>
+				</dependencies>
 				<executions>
-	          <execution>
-	            <phase>generate-sources</phase>
-	            <goals>
-	              <goal>bnd-generate</goal>
-	            </goals>
-	          </execution>
-	        </executions>
+					<execution>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>bnd-generate</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

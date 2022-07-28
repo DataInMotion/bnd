@@ -1,4 +1,4 @@
-package aQute.bnd.maven.export.plugin;
+package aQute.bnd.maven.generate.plugin;
 
 import java.io.File;
 import java.util.Set;
